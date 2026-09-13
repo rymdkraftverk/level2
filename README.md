@@ -28,8 +28,10 @@ l2.useSpritesheets([await PIXI.Assets.load('assets/spritesheet.json')])
 ```
 
 `boot` creates the pixi application, appends its canvas to `mount` and ticks
-the scheduler every frame. An `onError` option hears about behaviors that
-throw. Use `init(app)` instead when the application already exists.
+the scheduler every frame. A behavior that throws stops the ticker like any
+other uncaught error, unless an `onError` option takes the error instead and
+the game plays on. Use `init(app)` instead when the application already
+exists.
 `fitToWindow` scales the stage to the window now and on every resize, keeping
 text crisp by changing font sizes rather than scale. `getTexture(name)` finds a
 texture in the registered spritesheets by file name without extension.

@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js'
 import * as l2 from '../src/pixi'
+import * as scheduler from '../src/scheduler'
 
 const stage = new PIXI.Container()
 
@@ -15,6 +16,8 @@ afterEach(() => {
   l2.getAll()
     .slice()
     .forEach(displayObject => l2.destroy(displayObject))
+  scheduler.getAllBehaviors()
+    .forEach(behavior => scheduler.removeBehavior(behavior))
 })
 
 describe('add', () => {
@@ -61,6 +64,34 @@ describe('destroy', () => {
     l2.destroy(scene, { children: false })
 
     expect(l2.getAll()).toEqual([])
+  })
+})
+
+describe('init', () => {
+  const fakeApp = (onTick: (tick: (ticker: { deltaTime: number }) => void) => void) => ({
+    stage,
+    renderer: { width: 800, height: 600, resize: () => {} },
+    ticker:   { add: onTick },
+  } as unknown as PIXI.Application)
+
+  test('lets a throwing behavior surface when nobody handles errors', () => {
+    const ticks: ((ticker: { deltaTime: number }) => void)[] = []
+    l2.init(fakeApp(tick => ticks.push(tick)))
+    scheduler.addBehavior({ onUpdate: () => { throw new Error('boom') } })
+
+    expect(() => ticks[0]({ deltaTime: 1 })).toThrow('boom')
+  })
+
+  test('hands a throwing behavior to onError instead', () => {
+    const ticks: ((ticker: { deltaTime: number }) => void)[] = []
+    const seen: string[] = []
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    l2.init(fakeApp(tick => ticks.push(tick)), { onError: e => seen.push(e.message) })
+    scheduler.addBehavior({ onUpdate: () => { throw new Error('boom') } })
+
+    expect(() => ticks[0]({ deltaTime: 1 })).not.toThrow()
+    expect(seen).toEqual(['boom'])
+    error.mockRestore()
   })
 })
 

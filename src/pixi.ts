@@ -49,9 +49,13 @@ export const init = (
   app: PIXI.Application,
   options: { logging?: boolean, onError?: (error: Error) => void } = {},
 ) => {
-  const { logging = false, onError = () => {} } = options
+  const { logging = false, onError } = options
 
   app.ticker.add((ticker) => {
+    if (!onError) {
+      update(ticker.deltaTime)
+      return
+    }
     try {
       update(ticker.deltaTime)
     } catch (error) {
