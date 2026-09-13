@@ -1,2 +1,2 @@
-export * from './scheduler'
-export * from './pixi'
+export * from './scheduler.js'
+export * from './pixi.js'

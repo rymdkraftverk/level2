@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { settings, update } from './scheduler'
+import { settings, update } from './scheduler.js'
 
 export type Point = { x: number, y: number }
 
