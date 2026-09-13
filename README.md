@@ -1,8 +1,9 @@
 # l2
 
-A scheduler for games that count time in updates rather than milliseconds.
-Register behaviors, call `update` once per frame, and each behavior runs on the
-updates it asked for.
+Helpers for pixi games. A scheduler that counts time in updates rather than
+milliseconds, a boot that mounts the app and ticks that scheduler, a registry
+of display objects with ids and labels, textures from spritesheets, fitting the
+stage to the window, and a sound helper on the side.
 
 ## Install
 
@@ -12,15 +13,30 @@ The package is consumed straight from git, so pin a commit:
 npm install github:rymdkraftverk/level2#<commit>
 ```
 
-## Use
+## Boot
 
 ```ts
 import * as l2 from 'l2'
 
-app.ticker.add((ticker) => {
-  l2.update(ticker.deltaTime)
+const app = await l2.boot({
+  mount:  document.getElementById('game'),
+  width:  1280,
+  height: 720,
 })
+l2.fitToWindow()
+l2.useSpritesheets([await PIXI.Assets.load('assets/spritesheet.json')])
+```
 
+`boot` creates the pixi application, appends its canvas to `mount` and ticks
+the scheduler every frame. An `onError` option hears about behaviors that
+throw. Use `init(app)` instead when the application already exists.
+`fitToWindow` scales the stage to the window now and on every resize, keeping
+text crisp by changing font sizes rather than scale. `getTexture(name)` finds a
+texture in the registered spritesheets by file name without extension.
+
+## Schedule
+
+```ts
 l2.repeat((counter, deltaTime) => {
   sprite.rotation += 0.01 * deltaTime
 }, 1, { id: 'spin' })
@@ -46,8 +62,42 @@ time after `delay` updates. Both return the behavior record and accept an
 | `removeOnComplete` | keep a completed behavior around instead of removing it |
 
 `getBehavior`, `getAllBehaviors`, `removeBehavior` and `resetBehavior` manage
-the registry. `getLoopDuration` reports how long the last `update` took.
+the behaviors. `getLoopDuration` reports how long the last `update` took.
 Set `settings.logging = true` to hear about removed or duplicated ids.
+
+## Display objects
+
+```ts
+const scene = new PIXI.Container()
+l2.add(scene, { id: 'game' })
+
+const hero = new PIXI.Sprite(l2.getTexture('hero'))
+l2.add(hero, { parent: scene, zIndex: 10, labels: ['player'] })
+
+l2.get('game')
+l2.getByLabel('player')
+l2.getId(hero)
+l2.isDestroyed(hero)
+l2.destroy('game')
+```
+
+`add` puts an object under a parent (the stage by default), remembers it by id
+and labels, orders siblings by `zIndex`, and makes any `Text` resize with the
+stage. `destroy` removes an object and forgets it along with every registered
+descendant; pass `{ children: false }` to keep the children alive.
+`isColliding(a, b)` compares hit areas in game coordinates, and `grid`,
+`toRadians` and `getRandomInRange` are small helpers the games share.
+
+## Sound
+
+```ts
+import { sound } from 'l2/sound'
+
+const music = sound({ src: 'music.mp3', volume: 0.5, loop: true })
+music.stop()
+```
+
+Sound is a separate entry so games without audio never load howler.
 
 ## Develop
 
