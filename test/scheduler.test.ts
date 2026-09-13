@@ -1,4 +1,4 @@
-import * as l2 from '../src/index'
+import * as l2 from '../src/scheduler'
 
 const tick = (times: number) => {
   Array.from({ length: times }).forEach(() => l2.update(1))
