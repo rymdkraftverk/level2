@@ -6,6 +6,25 @@ export type Track = ReturnType<typeof track>
 
 const master = { limited: false }
 
+const KNEE = 0.8
+
+const CURVE_POINTS = 8192
+
+const softClipCurve = () => Float32Array.from(
+  { length: CURVE_POINTS },
+  (_unused, index) => {
+    const x = ((index * 2) / (CURVE_POINTS - 1)) - 1
+    const magnitude = Math.abs(x)
+
+    if (magnitude <= KNEE) {
+      return x
+    }
+
+    const headroom = 1 - KNEE
+    return Math.sign(x) * (KNEE + (headroom * Math.tanh((magnitude - KNEE) / headroom)))
+  },
+)
+
 const limitMaster = () => {
   if (master.limited || !Howler.usingWebAudio || !Howler.ctx || !Howler.masterGain) {
     return
@@ -13,12 +32,9 @@ const limitMaster = () => {
 
   master.limited = true
 
-  const limiter = Howler.ctx.createDynamicsCompressor()
-  limiter.threshold.setValueAtTime(-6, Howler.ctx.currentTime)
-  limiter.knee.setValueAtTime(0, Howler.ctx.currentTime)
-  limiter.ratio.setValueAtTime(20, Howler.ctx.currentTime)
-  limiter.attack.setValueAtTime(0.002, Howler.ctx.currentTime)
-  limiter.release.setValueAtTime(0.2, Howler.ctx.currentTime)
+  const limiter = Howler.ctx.createWaveShaper()
+  limiter.curve = softClipCurve()
+  limiter.oversample = '4x'
 
   Howler.masterGain.disconnect()
   Howler.masterGain.connect(limiter)

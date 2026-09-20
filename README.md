@@ -113,8 +113,9 @@ declaration loads a single player that is reused for every play, so a game that
 runs for hours never grows its audio graph.
 
 Tracks loop, and only one plays at a time: `playTrack` stops whichever was
-playing before. Everything is mixed through a limiter, so effects landing
-together cannot clip the output or bury the track.
+playing before. Everything is mixed through a soft clipper, so effects landing
+together cannot clip the output. It shapes only what approaches full scale and
+has no gain to ride back up, so the track never ducks behind an effect.
 
 Sound is a separate entry so games without audio never load howler.
 
