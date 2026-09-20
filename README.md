@@ -93,11 +93,28 @@ descendant; pass `{ children: false }` to keep the children alive.
 ## Sound
 
 ```ts
-import { sound } from 'l2/sound'
+import { effect, track, playTrack, stopTrack } from 'l2/sound'
 
-const music = sound({ src: 'music.mp3', volume: 0.5, loop: true })
-music.stop()
+const Sound = {
+  JUMP: effect({ src: 'jump.wav', volume: 0.6 }),
+}
+
+const Track = {
+  MUSIC: track({ src: 'music.mp3', volume: 0.5 }),
+}
+
+Sound.JUMP()
+playTrack(Track.MUSIC)
+stopTrack()
 ```
+
+Declare every sound once, at module level, and play it by calling it. Each
+declaration loads a single player that is reused for every play, so a game that
+runs for hours never grows its audio graph.
+
+Tracks loop, and only one plays at a time: `playTrack` stops whichever was
+playing before. Everything is mixed through a limiter, so effects landing
+together cannot clip the output or bury the track.
 
 Sound is a separate entry so games without audio never load howler.
 
