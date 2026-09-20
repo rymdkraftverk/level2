@@ -3,7 +3,8 @@
 Helpers for pixi games. A scheduler that counts time in updates rather than
 milliseconds, a boot that mounts the app and ticks that scheduler, a registry
 of display objects with ids and labels, textures from spritesheets, fitting the
-stage to the window, and a sound helper on the side.
+stage to the window, repositories for the game's own entities, and a sound
+helper on the side.
 
 ## Install
 
@@ -89,6 +90,25 @@ stage. `destroy` removes an object and forgets it along with every registered
 descendant; pass `{ children: false }` to keep the children alive.
 `isColliding(a, b)` compares hit areas in game coordinates, and `grid`,
 `toRadians` and `getRandomInRange` are small helpers the games share.
+
+## Entities
+
+```ts
+const players = l2.repository<Player>({
+  name:  'player',
+  read:  () => state.players,
+  write: (updated) => { state.players = updated },
+})
+
+players.add(player)
+players.find(id)
+players.change(p => ({ ...p, score: 0 }))
+```
+
+A repository owns a list of things with an `id` inside the game's own state.
+`all`, `count`, `has` and `find` read it, `add`, `remove` and `change` replace
+it. `find` throws naming the missing id rather than handing back `undefined`,
+so a lookup that should never miss fails where it happened.
 
 ## Sound
 
