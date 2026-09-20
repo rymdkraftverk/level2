@@ -34,21 +34,14 @@ const limitMaster = () => {
 
   const limiter = Howler.ctx.createWaveShaper()
   limiter.curve = softClipCurve()
-  limiter.oversample = '4x'
 
   Howler.masterGain.disconnect()
   Howler.masterGain.connect(limiter)
   limiter.connect(Howler.ctx.destination)
 }
 
-const load = ({ src, volume, loop }: {
-  src:    string
-  volume: number
-  loop?:  boolean
-}) => {
-  const howl = new Howl({
-    src: [src], volume, loop, preload: true,
-  })
+const load = ({ src, volume }: { src: string, volume: number }) => {
+  const howl = new Howl({ src: [src], volume, preload: true })
   limitMaster()
   return howl
 }
@@ -60,11 +53,19 @@ export const effect = (options: { src: string, volume: number }): Effect => {
   }
 }
 
-export const track = (options: { src: string, volume: number }) => (
-  load({ ...options, loop: true })
-)
-
 const current: { track?: Track } = {}
+
+export const track = (options: { src: string, volume: number }) => {
+  const howl = load(options)
+
+  howl.on('end', () => {
+    if (current.track === howl) {
+      howl.play()
+    }
+  })
+
+  return howl
+}
 
 export const playTrack = (next: Track) => {
   if (current.track === next) {
